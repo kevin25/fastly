@@ -3,6 +3,10 @@ sub vcl_recv {
     if (req.request != "HEAD" && req.request != "GET" && req.request != "FASTLYPURGE") {
       return(pass);
     }
+   if (req.http.Cookie ~ "WebSiteLang=") {
+    set req.http.MyLang = req.http.Cookie;
+    unset req.http.Cookie;
+   }
     return(lookup);
 
 }
@@ -13,6 +17,10 @@ sub vcl_fetch {
         set beresp.http.Vary = beresp.http.Vary ", MyLang";
       } else {
         set beresp.http.Vary = "MyLang";
+    }
+    if (beresp.http.Set-Cookie) {
+      set req.http.MyLang = beresp.http.Set-Cookie;
+      unset beresp.http.Set-Cookie;
     }
       if ((beresp.status == 500 || beresp.status == 503) && req.restarts < 1 && (req.request == "GET" || req.request == "HEAD")) {
     restart;
@@ -74,7 +82,16 @@ sub vcl_deliver {
   if (req.url ~ "en" && req.http.Cookie !~ "WebSiteLang=en") { 
     add resp.http.Set-Cookie = "WebSiteLang=en; expires=" now + 180d "; path=/;";
   }
-  
+  if (req.http.MyLang) {
+    set resp.http.Set-Cookie = req.http.MyLang;
+  }
+}
+sub vcl_hash {
+  #FASTLY hash
+    if(req.http.WebSiteLang) {
+      set req.hash += req.http.WebSiteLang;
+    }
+    return(hash);
 }
 sub vcl_hit {
 #FASTLY hit
