@@ -3,10 +3,35 @@ sub vcl_recv {
     if (req.request != "HEAD" && req.request != "GET" && req.request != "FASTLYPURGE") {
       return(pass);
     }
-   if (req.http.Cookie ~ "WebSiteLang=") {
-    set req.http.X-Language = req.http.Cookie;
-    unset req.http.Cookie;
-   }
+    if (req.url ~ "en" || req.url ~ "^/$") {
+
+        set req.http.MyLang = "MyLang=en";
+
+        } elseif (req.url ~ "ja") {
+
+        set req.http.MyLang = "MyLang=ja";
+
+        } elseif (req.url ~ "es") {
+
+        set req.http.MyLang = "MyLang=es";
+
+        } elseif (req.url ~ "it") {
+
+        set req.http.MyLang = "MyLang=it";
+
+        } elseif (req.url ~ "de") {
+
+        set req.http.MyLang = "MyLang=de";
+
+        } elseif (req.url ~ "pt") {
+
+        set req.http.MyLang = "MyLang=pt";
+
+        } elseif (req.url ~ "fr") {
+
+        set req.http.MyLang = "MyLang=fr";
+
+        }
     return(lookup);
 
 }
@@ -56,7 +81,7 @@ sub vcl_fetch {
 sub vcl_deliver {
 	#FASTLY deliver
    if (resp.http.Vary) {
-    set resp.http.Vary = regsub(resp.http.Vary, "MyLang", "WebSiteLang");
+    set resp.http.Vary = regsub(resp.http.Vary, "X-Language", "WebSiteLang");
   } 
   if (req.url ~ "ja" && req.http.Cookie !~ "WebSiteLang=ja") { 
     add resp.http.Set-Cookie = "WebSiteLang=ja; expires=" now + 180d "; path=/;";
@@ -79,17 +104,27 @@ sub vcl_deliver {
   if (req.url ~ "en" && req.http.Cookie !~ "WebSiteLang=en") { 
     add resp.http.Set-Cookie = "WebSiteLang=en; expires=" now + 180d "; path=/;";
   }
-  #if (req.http.MyLang) {
-   # set resp.http.Set-Cookie = req.http.MyLang;
+  #if (req.http.X-Language) {
+  #  set resp.http.Set-Cookie = req.http.Language;
   #}
 }
-#sub vcl_hash {
+sub vcl_hash {
   #FASTLY hash
-#    if(req.http.WebSiteLang) {
-#      set req.hash += req.http.WebSiteLang;
-#    }
-#    return(hash);
-#}
+    set req.hash += req.url;
+    if (req.http.host) {
+    set req.hash += req.http.host;
+        #hash_data(req.http.host);
+    } else {
+    set req.hash += server.ip;
+        #hash_data(server.ip);
+    }
+    if (req.http.Language) {
+        #add cookie in hash
+    set req.hash += req.http.Language;
+        #hash_data(req.http.Language);
+    }
+    return(hash);
+}
 sub vcl_hit {
 #FASTLY hit
 
