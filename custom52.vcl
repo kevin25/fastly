@@ -102,11 +102,8 @@ sub vcl_deliver {
     add resp.http.Set-Cookie = "WebSiteLang=de; expires=" now + 180d "; path=/;";
   }
   if (req.url ~ "en" && req.http.Cookie !~ "WebSiteLang=en") { 
-    add resp.http.Set-Cookie = "WebSiteLang=en; expires=" now + 180d "; path=/;";
+    add resp.http.Set-Cookie = "WebSiteLang=deleted; expires=" now + 180d "; path=/;";
   }
-  #if (req.http.X-Language) {
-  #  set resp.http.Set-Cookie = req.http.Language;
-  #}
 }
 sub vcl_hash {
   #FASTLY hash
@@ -118,9 +115,9 @@ sub vcl_hash {
     set req.hash += server.ip;
         #hash_data(server.ip);
     }
-    if (req.http.Language) {
+    if (req.http.Cookie) {
         #add cookie in hash
-    set req.hash += req.http.Language;
+    set req.hash += req.http.Cookie;
         #hash_data(req.http.Language);
     }
     return(hash);
