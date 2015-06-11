@@ -118,7 +118,7 @@ sub vcl_hash {
     if (req.http.Cookie) {
         #add cookie in hash
     set req.hash += req.http.Cookie;
-        #hash_data(req.http.Cookie);
+        #hash_data(req.http.Language);
     }
     return(hash);
 }
