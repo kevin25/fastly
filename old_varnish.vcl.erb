@@ -95,20 +95,3 @@ sub vcl_deliver {
 }
 
 
-sub vcl_hash {
-     set req.hash += req.url;
-    if (req.http.host) {
-    set req.hash += req.http.host;
-        #hash_data(req.http.host);
-    } else {
-    set req.hash += server.ip;
-        #hash_data(server.ip);
-    }
-    if (req.http.Cookie) {
-        #add cookie in hash
-    set req.hash += req.http.Cookie;
-        #hash_data(req.http.Cookie);
-
-    }
-    return(hash);
-}
