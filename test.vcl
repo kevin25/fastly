@@ -36,7 +36,7 @@ sub vcl_recv {
 
 }
 sub vcl_fetch {
-	#FASTLY fetch
+  #FASTLY fetch
 
     if (beresp.http.Vary) {
         set beresp.http.Vary = beresp.http.Vary ", MyLang";
@@ -79,31 +79,11 @@ sub vcl_fetch {
 
 }
 sub vcl_deliver {
-	#FASTLY deliver
+  #FASTLY deliver
    if (resp.http.Vary) {
-    set resp.http.Vary = regsub(resp.http.Vary, "X-Language", "WebSiteLang");
+    set resp.http.Vary = regsub(resp.http.Vary, "MyLang", "WebSiteLang");
   } 
-  if (req.url ~ "ja" && req.http.Cookie !~ "WebSiteLang=ja") { 
-    add resp.http.Set-Cookie = "WebSiteLang=ja; expires=" now + 180d "; path=/;";
-  } 
-  if (req.url ~ "es" && req.http.Cookie !~ "WebSiteLang=es") { 
-    add resp.http.Set-Cookie = "WebSiteLang=es; expires=" now + 180d "; path=/;";
-  }
-  if (req.url ~ "pt" && req.http.Cookie !~ "WebSiteLang=pt") { 
-    add resp.http.Set-Cookie = "WebSiteLang=pt; expires=" now + 180d "; path=/;";
-  } 
-  if (req.url ~ "it" && req.http.Cookie !~ "WebSiteLang=it") { 
-    add resp.http.Set-Cookie = "WebSiteLang=it; expires=" now + 180d "; path=/;";
-  }  
-  if (req.url ~ "fr" && req.http.Cookie !~ "WebSiteLang=fr") { 
-    add resp.http.Set-Cookie = "WebSiteLang=fr; expires=" now + 180d "; path=/;";
-  } 
-  if (req.url ~ "de" && req.http.Cookie !~ "WebSiteLang=de") { 
-    add resp.http.Set-Cookie = "WebSiteLang=de; expires=" now + 180d "; path=/;";
-  }
-  if (req.url ~ "en" && req.http.Cookie !~ "WebSiteLang=en") { 
-    add resp.http.Set-Cookie = "WebSiteLang=deleted; expires=" now + 180d "; path=/;";
-  }
+
 }
 sub vcl_hash {
   #FASTLY hash
@@ -118,7 +98,7 @@ sub vcl_hash {
     if (req.http.Cookie) {
         #add cookie in hash
     set req.hash += req.http.Cookie;
-        #hash_data(req.http.Language);
+        #hash_data(req.http.Cookie);
     }
     return(hash);
 }
