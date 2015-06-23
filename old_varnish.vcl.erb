@@ -86,7 +86,28 @@ sub vcl_deliver {
     }
     if (resp.http.Vary) {
        set resp.http.Vary = regsub(resp.http.Vary, "MyLang", "WebSiteLang");
+  }
+    if (req.url ~ "ja" && req.http.Cookie !~ "WebSiteLang=ja") { 
+    add resp.http.Set-Cookie = "WebSiteLang=ja; expires=" now + 180d "; path=/;";
   } 
+  if (req.url ~ "es" && req.http.Cookie !~ "WebSiteLang=es") { 
+    add resp.http.Set-Cookie = "WebSiteLang=es; expires=" now + 180d "; path=/;";
+  }
+  if (req.url ~ "pt" && req.http.Cookie !~ "WebSiteLang=pt") { 
+    add resp.http.Set-Cookie = "WebSiteLang=pt; expires=" now + 180d "; path=/;";
+  } 
+  if (req.url ~ "it" && req.http.Cookie !~ "WebSiteLang=it") { 
+    add resp.http.Set-Cookie = "WebSiteLang=it; expires=" now + 180d "; path=/;";
+  }  
+  if (req.url ~ "fr" && req.http.Cookie !~ "WebSiteLang=fr") { 
+    add resp.http.Set-Cookie = "WebSiteLang=fr; expires=" now + 180d "; path=/;";
+  } 
+  if (req.url ~ "de" && req.http.Cookie !~ "WebSiteLang=de") { 
+    add resp.http.Set-Cookie = "WebSiteLang=de; expires=" now + 180d "; path=/;";
+  }
+  if (req.url ~ "en" && req.http.Cookie !~ "WebSiteLang=en") { 
+    add resp.http.Set-Cookie = "WebSiteLang=deleted; expires=" now + 180d "; path=/;";
+  }
     if (obj.hits > 0) {
                 set resp.http.X-Cache = "HIT";
         } else {
