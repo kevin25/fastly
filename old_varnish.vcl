@@ -2,14 +2,14 @@ sub vcl_recv {
 
     if (req.http.Cookie ~ "WebSiteLang=") {
             #unset all the cookie from request except language
-            set req.http.Language = regsub(req.http.Cookie, "(?:^|;\s*)(?:WebSiteLang=(.*?))(?:;|$)", "\1.");
+        set req.http.Language = regsub(req.http.Cookie, "(?:^|;\s*)(?:WebSiteLang=(.*?))(?:;|$)", "\1.");
         } elseif (!req.http.Cookie) {
             set req.http.Language = "deleted";
         }
 
-        if (req.http.Language) {
+        if (req.url ~ "en") {
 
-        set req.http.MyLang = "MyLang=en";
+        set req.http.MyLang = "MyLang=deleted";
 
         } elseif (req.url ~ "ja") {
 
@@ -81,32 +81,12 @@ sub vcl_fetch {
 
 sub vcl_deliver {
     
-    if (req.http.X-Varnish-Accept-Language) {
-        set resp.http.Set-Cookie = req.http.Language;
-    }
+    #if (req.http.X-Varnish-Accept-Language) {
+    #    set resp.http.Set-Cookie = req.http.Language;
+    #}
     if (resp.http.Vary) {
        set resp.http.Vary = regsub(resp.http.Vary, "MyLang", "WebSiteLang");
-  }
-    if (req.url ~ "ja" && req.http.Cookie !~ "WebSiteLang=ja") { 
-    add resp.http.Set-Cookie = "WebSiteLang=ja; expires=" now + 180d "; path=/;";
-  } 
-  if (req.url ~ "es" && req.http.Cookie !~ "WebSiteLang=es") { 
-    add resp.http.Set-Cookie = "WebSiteLang=es; expires=" now + 180d "; path=/;";
-  }
-  if (req.url ~ "pt" && req.http.Cookie !~ "WebSiteLang=pt") { 
-    add resp.http.Set-Cookie = "WebSiteLang=pt; expires=" now + 180d "; path=/;";
-  } 
-  if (req.url ~ "it" && req.http.Cookie !~ "WebSiteLang=it") { 
-    add resp.http.Set-Cookie = "WebSiteLang=it; expires=" now + 180d "; path=/;";
-  }  
-  if (req.url ~ "fr" && req.http.Cookie !~ "WebSiteLang=fr") { 
-    add resp.http.Set-Cookie = "WebSiteLang=fr; expires=" now + 180d "; path=/;";
-  } 
-  if (req.url ~ "de" && req.http.Cookie !~ "WebSiteLang=de") { 
-    add resp.http.Set-Cookie = "WebSiteLang=de; expires=" now + 180d "; path=/;";
-  }
-  if (req.url ~ "en" && req.http.Cookie !~ "WebSiteLang=en") { 
-    add resp.http.Set-Cookie = "WebSiteLang=deleted; expires=" now + 180d "; path=/;";
+       set resp.http.Set-Cookie = req.http.MyLang;
   }
     if (obj.hits > 0) {
                 set resp.http.X-Cache = "HIT";
@@ -114,5 +94,3 @@ sub vcl_deliver {
                 set resp.http.X-Cache = "MISS";
         }
 }
-
-
