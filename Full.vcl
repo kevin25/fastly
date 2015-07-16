@@ -1,14 +1,14 @@
 C!
 # Backends
 
-backend default_backend {
+backend F_addr_194_135_94_106 {
     .first_byte_timeout = 15s;
     .connect_timeout = 1s;
     .max_connections = 200;
     .between_bytes_timeout = 10s;
-    .share_key = "your key";
+    .share_key = "54TMh0ZJDOKvRSuyZijCnx";
     .port = "80";
-    .host = "Your Ip";
+    .host = "194.135.94.106";
   
       
   
@@ -17,6 +17,10 @@ backend default_backend {
 
 
 sub vcl_recv {
+
+   set req.http.Lang = req.http.Cookie:siteLang;
+
+
 #--FASTLY RECV CODE START
   if (req.restarts == 0) {
     if (!req.http.X-Timer) {
@@ -29,7 +33,7 @@ sub vcl_recv {
 
     
   # default conditions
-  set req.backend = default_backend;
+  set req.backend = F_addr_194_135_94_106;
   
 
   
@@ -39,42 +43,31 @@ sub vcl_recv {
       
   
 #--FASTLY RECV CODE END
-    if (req.request != "HEAD" && req.request != "GET" && req.request != "FASTLYPURGE") {
+
+if (req.request != "HEAD" && req.request != "GET" && req.request != "FASTLYPURGE") {
       return(pass);
     }
-    if (req.url ~ "en" || req.url ~ "^/$") {
 
-        set req.http.MyLang = "MyLang=en";
-
-        } elseif (req.url ~ "ja") {
-
-        set req.http.MyLang = "MyLang=ja";
-
-        } elseif (req.url ~ "es") {
-
-        set req.http.MyLang = "MyLang=es";
-
-        } elseif (req.url ~ "it") {
-
-        set req.http.MyLang = "MyLang=it";
-
-        } elseif (req.url ~ "de") {
-
-        set req.http.MyLang = "MyLang=de";
-
-        } elseif (req.url ~ "pt") {
-
-        set req.http.MyLang = "MyLang=pt";
-
-        } elseif (req.url ~ "fr") {
-
-        set req.http.MyLang = "MyLang=fr";
-
-        }
     return(lookup);
 
 }
+
 sub vcl_fetch {
+
+  if (beresp.http.Set-Cookie){
+  # The response has a Set-Cookie ...
+    set beresp.http.Lang-Set-Cookie = beresp.http.Set-Cookie;
+    unset beresp.http.Set-Cookie;
+  }
+
+  set beresp.http.Vary = "Lang";
+
+  #For Debugging Purposes
+  set beresp.http.X-Lang = req.http.Cookie:siteLang;
+
+
+
+
 
 
 
@@ -94,30 +87,11 @@ sub vcl_fetch {
   }
   
     
-  
- # priority: 0
-
- 
-      
-  # Header rewrite Remove Headers : 10
-  
-      
-            unset beresp.http.Set-Cookie;
-          
-  
- 
- 
-      
+    
 #--FASTLY FETCH END
 
 
-    if (beresp.http.Vary) {
-        set beresp.http.Vary = beresp.http.Vary ", MyLang";
-      } else {
-        set beresp.http.Vary = "MyLang";
-    }
-
-      if ((beresp.status == 500 || beresp.status == 503) && req.restarts < 1 && (req.request == "GET" || req.request == "HEAD")) {
+if ((beresp.status == 500 || beresp.status == 503) && req.restarts < 1 && (req.request == "GET" || req.request == "HEAD")) {
     restart;
   }
 
@@ -146,12 +120,16 @@ sub vcl_fetch {
     # keep the ttl here
   } else {
     # apply the default ttl
-    set beresp.ttl = 3600s;
+    set beresp.ttl = 31536000s;
   }
+
   return(deliver);
 
 }
+
 sub vcl_deliver {
+
+
 
 
 #--FASTLY DELIVER START
@@ -228,52 +206,11 @@ sub vcl_deliver {
 
   
 #--FASTLY DELIVER END
-   if (resp.http.Vary) {
-    set resp.http.Vary = regsub(resp.http.Vary, "X-Language", "WebSiteLang");
-  } 
-  if (req.url ~ "ja" && req.http.Cookie !~ "WebSiteLang=ja") { 
-    add resp.http.Set-Cookie = "WebSiteLang=ja; expires=" now + 180d "; path=/;";
-  } 
-  if (req.url ~ "es" && req.http.Cookie !~ "WebSiteLang=es") { 
-    add resp.http.Set-Cookie = "WebSiteLang=es; expires=" now + 180d "; path=/;";
-  }
-  if (req.url ~ "pt" && req.http.Cookie !~ "WebSiteLang=pt") { 
-    add resp.http.Set-Cookie = "WebSiteLang=pt; expires=" now + 180d "; path=/;";
-  } 
-  if (req.url ~ "it" && req.http.Cookie !~ "WebSiteLang=it") { 
-    add resp.http.Set-Cookie = "WebSiteLang=it; expires=" now + 180d "; path=/;";
-  }  
-  if (req.url ~ "fr" && req.http.Cookie !~ "WebSiteLang=fr") { 
-    add resp.http.Set-Cookie = "WebSiteLang=fr; expires=" now + 180d "; path=/;";
-  } 
-  if (req.url ~ "de" && req.http.Cookie !~ "WebSiteLang=de") { 
-    add resp.http.Set-Cookie = "WebSiteLang=de; expires=" now + 180d "; path=/;";
-  }
-  if (req.url ~ "en" && req.http.Cookie !~ "WebSiteLang=en") { 
-    add resp.http.Set-Cookie = "WebSiteLang=deleted; expires=" now + 180d "; path=/;";
-  }
-}
-sub vcl_hash {
 
-#--FASTLY HASH start
-  # support purge all
-  set req.hash += "#####GENERATION#####";
-#--FASTLY HASH end
-    set req.hash += req.url;
-    if (req.http.host) {
-    set req.hash += req.http.host;
-        #hash_data(req.http.host);
-    } else {
-    set req.hash += server.ip;
-        #hash_data(server.ip);
-    }
-    if (req.http.Cookie) {
-        #add cookie in hash
-    set req.hash += req.http.Cookie;
-        #hash_data(req.http.Language);
-    }
-    return(hash);
+  set resp.http.Set-Cookie = resp.http.Lang-Set-Cookie;
+  unset resp.http.Lang-Set-Cookie;
 }
+
 sub vcl_hit {
 #--FASTLY HIT START
 
@@ -348,6 +285,7 @@ sub vcl_miss {
 #--FASTLY MISS STOP
   return(fetch);
 }
+
 sub vcl_error {
 #--FASTLY ERROR START
 
@@ -463,5 +401,25 @@ sub vcl_pipe {
     set bereq.http.connection = "close";
   }
 #--FASTLY PIPE STOP
+
+}
+
+sub vcl_hash {
+
+  #-FASTLY HASH CODE WITH GENERATION FOR PURGE ALL
+  #
+    
+  
+  #if unspecified fall back to normal
+  {
+    
+
+    set req.hash += req.url;
+    set req.hash += req.http.host;
+    set req.hash += "#####GENERATION#####";
+    return (hash);
+  }
+  #--FASTLY END HASH CODE
+
 
 }
